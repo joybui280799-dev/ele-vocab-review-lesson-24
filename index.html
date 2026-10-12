@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vocabulary Review</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: Arial, Helvetica, sans-serif; background: #f4f8fb; color: #1f2937; margin: 0; line-height: 1.5; }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 24px 20px 70px; }
+  h1 { text-align: center; font-size: 28px; margin: 0 0 4px; color: #1e5fa8; }
+  .sub { text-align: center; color: #6b7280; margin: 0 0 14px; }
+  .timer-bar { position: sticky; top: 0; z-index: 20; background: #1e5fa8; color: #fff; padding: 10px 16px 12px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
+  .timer-row { display: flex; justify-content: space-between; align-items: baseline; font-weight: bold; font-size: 17px; }
+  .timer-row .limit { font-weight: normal; font-size: 14px; opacity: .9; }
+  .track { height: 10px; background: rgba(255,255,255,.28); border-radius: 5px; margin-top: 8px; overflow: hidden; }
+  .fill { height: 100%; width: 0%; background: #7ee0b5; border-radius: 5px; transition: width .4s linear, background .4s; }
+  .fill.warn { background: #ffd166; } .fill.over { background: #ff6b5e; }
+  .directions { background: #fff8e1; border: 1px solid #f0c94a; border-left: 6px solid #f0b429; padding: 14px 16px; margin: 18px 0 20px; font-style: italic; border-radius: 6px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .chip { border: 1px solid #b9c7d6; background: #fff; color: #374151; border-radius: 18px; padding: 6px 14px; font-size: 14px; font-weight: bold; cursor: pointer; }
+  .chip.active { background: #1e5fa8; border-color: #1e5fa8; color: #fff; }
+  .chip.done:not(.active) { background: #e6f4ee; border-color: #2f8f6f; color: #1d6b50; }
+  .page-indicator { text-align: center; font-weight: bold; color: #6b7280; letter-spacing: 1px; margin-bottom: 8px; font-size: 14px; text-transform: uppercase; }
+  .page-instr { background: #eef4fb; border-radius: 6px; padding: 10px 14px; margin-bottom: 14px; font-size: 15px; }
+  .ghead { font-weight: bold; color: #1e5fa8; margin: 18px 0 8px; font-size: 16px; }
+  .gcols { display: grid; grid-template-columns: 1fr; gap: 14px; }
+  @media (min-width: 880px) { .gcols { grid-template-columns: 1.05fr 1fr; align-items: start; } .passage { position: sticky; top: 92px; } }
+  .passage { background: #fff; border: 1px solid #cfd8e3; border-radius: 8px; padding: 16px 18px; font-size: 16px; }
+  .passage p { margin: 0 0 10px; } .passage p:last-child { margin-bottom: 0; }
+  .passage .meta { color: #4b5563; font-size: 14px; margin: 0; }
+  .passage .ptitle { font-weight: bold; font-size: 17px; text-align: center; margin-bottom: 10px; }
+  .passage .blank { font-weight: bold; color: #1e5fa8; white-space: nowrap; }
+  .player { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: #fff; border: 1px solid #cfd8e3; border-left: 6px solid #7a5cc2; border-radius: 8px; padding: 10px 14px; margin: 10px 0; }
+  .playBtn { background: #7a5cc2; color: #fff; border: none; border-radius: 20px; padding: 8px 18px; font-weight: bold; font-size: 14px; cursor: pointer; }
+  .playBtn.on { background: #c0392b; } .playBtn:disabled { background: #b8bfca; cursor: not-allowed; }
+  .plays { font-size: 14px; color: #4b5563; } .pstat { font-size: 13px; color: #b86a1c; }
+  .question { background: #fff; border: 1px solid #e0e6ed; border-radius: 8px; padding: 12px 16px; margin: 12px 0; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+  .qtext { font-weight: bold; color: #1e5fa8; margin: 0 0 6px; font-size: 16px; }
+  .qtext .num { margin-right: 4px; }
+  .option { display: block; margin: 3px 0; padding: 6px 8px; border-radius: 4px; cursor: pointer; }
+  .option:hover { background: #eaf2ff; } .option input { margin-right: 8px; }
+  .letters { display: flex; gap: 22px; } .letters .option { margin: 0; padding: 6px 12px; }
+  .warning { text-align: center; color: #c0392b; font-weight: bold; margin-top: 14px; display: none; }
+  .nav-row { display: flex; justify-content: space-between; align-items: center; margin-top: 26px; }
+  .navBtn { padding: 12px 28px; font-size: 15px; font-weight: bold; border: none; border-radius: 24px; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
+  .backBtn { background: #e5e9ee; color: #374151; } .nextBtn { background: #2f8f6f; color: #fff; }
+  #result { display: none; }
+  .score-card { background: #fff; border: 2px solid #2f8f6f; border-radius: 12px; text-align: center; padding: 24px 20px; margin: 26px auto 24px; max-width: 860px; box-shadow: 0 4px 10px rgba(0,0,0,.08); }
+  .score-card h2 { margin: 0 0 6px; color: #2f8f6f; font-size: 24px; }
+  .score-card .big { font-size: 52px; font-weight: bold; color: #1e5fa8; margin: 4px 0; }
+  .panel { background: #fff; border: 1px solid #e0e6ed; border-radius: 10px; padding: 16px 18px; margin: 0 auto 22px; max-width: 860px; }
+  .panel h3 { margin: 0 0 12px; font-size: 18px; color: #1e5fa8; }
+  .topic-row { display: grid; grid-template-columns: 1fr 120px 56px; gap: 10px; align-items: center; padding: 6px 0; border-bottom: 1px solid #eef1f5; font-size: 15px; }
+  .topic-row:last-child { border-bottom: none; }
+  .topic-row small { display: block; color: #6b7280; font-size: 13px; }
+  .mini-track { height: 10px; background: #e5e9ee; border-radius: 5px; overflow: hidden; } .mini-fill { height: 100%; background: #2f8f6f; } .mini-fill.low { background: #e0883a; }
+  .tscore { text-align: right; font-weight: bold; } .review-hint { margin-top: 12px; font-size: 14px; }
+  .rv-wrap { max-width: 860px; margin: 0 auto; }
+  .filters { display: flex; gap: 8px; margin: 6px 0 14px; flex-wrap: wrap; }
+  .filterBtn { border: 1px solid #b9c7d6; background: #fff; border-radius: 18px; padding: 7px 16px; font-weight: bold; font-size: 14px; cursor: pointer; color: #374151; }
+  .filterBtn.active { background: #1e5fa8; border-color: #1e5fa8; color: #fff; }
+  .rev { background: #fff; border: 1px solid #e0e6ed; border-left: 6px solid #9aa5b1; border-radius: 8px; padding: 14px 18px; margin: 14px 0; }
+  .rev.ok { border-left-color: #2f8f6f; } .rev.bad { border-left-color: #c0392b; } .rev.skip { border-left-color: #e0883a; }
+  .rev-head { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; margin-bottom: 4px; }
+  .rev-status { font-weight: bold; font-size: 14px; white-space: nowrap; }
+  .rev.ok .rev-status { color: #1d6b50; } .rev.bad .rev-status { color: #c0392b; } .rev.skip .rev-status { color: #b86a1c; }
+  .rev-topic { font-size: 13px; color: #6b7280; margin-bottom: 8px; }
+  .ropt { padding: 6px 10px; border-radius: 6px; margin: 4px 0; border: 1px solid transparent; }
+  .ropt.correct { background: #e6f4ee; border-color: #2f8f6f; } .ropt.wrong { background: #fdecea; border-color: #c0392b; }
+  .ropt .tag { font-weight: bold; font-size: 13px; margin-left: 6px; } .ropt.correct .tag { color: #1d6b50; } .ropt.wrong .tag { color: #c0392b; }
+  .script { background: #f6f3fc; border-radius: 6px; padding: 10px 12px; margin: 8px 0; font-size: 15px; } .script div { margin: 2px 0; }
+  .exp { background: #f1f6fc; border-radius: 6px; padding: 10px 12px; margin-top: 10px; font-size: 15px; } .exp b { color: #1e5fa8; }
+  .retry { display: block; margin: 30px auto 0; background: #2f8f6f; color: #fff; border: none; border-radius: 24px; padding: 12px 34px; font-size: 16px; font-weight: bold; cursor: pointer; }
+  @media (max-width: 560px) { .topic-row { grid-template-columns: 1fr 80px 48px; } h1 { font-size: 23px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Vocabulary Review</h1>
+  <p class="sub">TOEIC Part 5 and Part 6 · Level A2 – B1</p>
+  <div class="timer-bar" id="timerBar">
+    <div class="timer-row"><span>⏱ <span id="elapsed">00:00</span></span><span class="limit" id="limitLabel"></span></div>
+    <div class="track"><div class="fill" id="timeFill"></div></div>
+  </div>
+  <div class="directions" id="directions"></div>
+  <div id="quiz">
+    <div class="chips" id="chips"></div>
+    <div class="page-indicator" id="pageIndicator"></div>
+    <div class="page-instr" id="pageInstr"></div>
+    <div id="pageBody"></div>
+    <div class="warning" id="warning"></div>
+    <div class="nav-row">
+      <button type="button" class="navBtn backBtn" id="backBtn">&larr; Back</button>
+      <button type="button" class="navBtn nextBtn" id="nextBtn">Next &rarr;</button>
+    </div>
+  </div>
+  <div id="result">
+    <div class="score-card"><h2>Test Completed!</h2><div>Your Score</div><div class="big" id="scorePercent">0%</div>
+      <div><span id="scoreCount"></span> &nbsp;|&nbsp; Time taken: <span id="finalTime"></span></div></div>
+    <div class="panel"><h3>Your result by topic</h3><div id="topicRows"></div><div class="review-hint" id="reviewHint"></div></div>
+    <div class="rv-wrap">
+      <h3 style="color:#1e5fa8;margin:0 0 8px;">Review and explanations</h3>
+      <div class="filters">
+        <button type="button" class="filterBtn active" data-filter="all">All questions</button>
+        <button type="button" class="filterBtn" data-filter="wrong">Wrong or skipped only</button>
+      </div>
+      <div id="reviewList"></div>
+      <button type="button" class="retry" id="retryBtn">Try again</button>
+    </div>
+  </div>
+</div>
+<script>
+const CFG = {"title":"Vocabulary Review","sub":"TOEIC Part 5 and Part 6 · Level A2 – B1","limitMin":20,"directions":"Directions: Choose the best answer (A, B, C or D) for each question. In Part 6, read each text and choose the best word or sentence for each blank. You can move between parts and change your answers before you submit. After you submit, you will see your score, your result for each topic, and an explanation for every question.","topics":{"1":{"en":"Travel and places","vi":"Du lịch, đặt phòng, chỉ đường"},"2":{"en":"Shopping, money and clothes","vi":"Mua sắm, tiền bạc, quần áo"},"3":{"en":"Jobs and personality","vi":"Nghề nghiệp và tính cách"},"4":{"en":"Family and hobbies","vi":"Gia đình và sở thích"},"5":{"en":"Business and office English","vi":"Tiếng Anh công sở, thư tín"}},"pages":[{"label":"Part 5","instr":"<b>Part 5.</b> A word or phrase is missing in each sentence below. Choose the best answer.","groups":[{"qs":[{"topic":1,"stem":"I made a ______ at the restaurant for four people at seven o'clock.","exp":"reservation = sự đặt chỗ (make a reservation = reserve = book). semester là học kỳ, uniform là đồng phục, currency là tiền tệ nên không hợp nghĩa.","opts":["semester","uniform","currency","reservation"],"c":3},{"topic":1,"stem":"Guests can ______ in at the hotel after two o'clock.","exp":"check in = nhận phòng (đối lập: check out = trả phòng). spell, forget, hang không tạo thành cụm hợp nghĩa với in trong câu này.","opts":["forget","check","hang","spell"],"c":1},{"topic":2,"stem":"The total is $48. You give me $50, so your ______ is $2.","exp":"change = tiền thừa. Tổng tiền (total) đã là $48; tax là thuế và card là thẻ, không phải số tiền trả lại.","opts":["total","change","card","tax"],"c":1},{"topic":2,"stem":"Sorry, we don't take credit cards. You have to pay in ______.","exp":"pay in cash = trả bằng tiền mặt. coat (áo khoác), soap (xà phòng), battery (pin) là đồ vật, không đi với pay in.","opts":["coat","soap","cash","battery"],"c":2},{"topic":3,"stem":"The ______ at the supermarket scanned my items and told me the total.","exp":"cashier = nhân viên thu ngân, người tính tiền cho khách. referee là trọng tài, architect là kiến trúc sư, athlete là vận động viên.","opts":["athlete","referee","architect","cashier"],"c":3},{"topic":3,"stem":"My car makes a strange noise. I need to take it to a ______.","exp":"mechanic = thợ máy, người sửa xe. dentist là nha sĩ, secretary là thư ký, waiter là nhân viên phục vụ.","opts":["mechanic","waiter","secretary","dentist"],"c":0},{"topic":3,"stem":"Our teacher is very ______. She never gets angry when we make mistakes.","exp":"patient = kiên nhẫn, hợp với 'không bao giờ tức giận'. careless là cẩu thả, thoughtless là vô tâm, deceitful là bịp bợm.","opts":["careless","deceitful","patient","thoughtless"],"c":2},{"topic":3,"stem":"I really ______ my high school teacher. I want to be like her.","exp":"admire = ngưỡng mộ; vì ngưỡng mộ nên muốn trở thành giống cô. advise là khuyên, register là đăng ký, forget là quên.","opts":["admire","register","forget","advise"],"c":0},{"topic":2,"stem":"All students must wear a ______ to school: a white shirt and dark trousers.","exp":"uniform = đồng phục (áo sơ mi trắng và quần tối màu). suitcase là vali, wallet là ví, necklace là vòng cổ.","opts":["uniform","wallet","necklace","suitcase"],"c":0},{"topic":2,"stem":"This shirt is too ______. I can't move my arms.","exp":"tight = chật; chật nên khó cử động tay. loose và wide nghĩa là rộng, plain là trơn không họa tiết.","opts":["plain","tight","loose","wide"],"c":1},{"topic":1,"stem":"Go straight and turn right at the ______. You will see the museum on your left.","exp":"intersection = ngã tư (turn right at the intersection). stationery là văn phòng phẩm, tax là thuế, furniture là đồ nội thất.","opts":["furniture","stationery","intersection","tax"],"c":2},{"topic":4,"stem":"I have two ______: an older brother and a younger sister.","exp":"siblings = anh chị em ruột. grandparents là ông bà, in-laws là họ hàng bên vợ/chồng, parents là bố mẹ.","opts":["in-laws","parents","grandparents","siblings"],"c":3},{"topic":4,"stem":"My dad taught me to swim, so we go ______ together every Sunday.","exp":"go swimming = đi bơi (bố dạy bơi). skiing là trượt tuyết, surfing là lướt sóng, skateboarding là trượt ván.","opts":["swimming","skateboarding","skiing","surfing"],"c":0},{"topic":5,"stem":"The company holds a sports day ______. It is always in July every year.","exp":"annually = every year (hằng năm). daily là hằng ngày, weekly là hằng tuần, rarely là hiếm khi.","opts":["annually","rarely","daily","weekly"],"c":0},{"topic":5,"stem":"The doctor ______ me to drink more water and sleep early.","exp":"advise sb to V = khuyên ai làm gì. offered, registered, remained không đi với cấu trúc 'sb + to V' mang nghĩa khuyên.","opts":["advised","registered","remained","offered"],"c":0}]}]},{"label":"Part 6 · Text 1","instr":"<b>Part 6.</b> Read the text. A word or phrase is missing in some places. Choose the best answer for each blank.","groups":[{"head":"Questions 16–18 refer to the following email.","passage":{"meta":["To: All students","From: Ms. Hanh, Student Office","Subject: English Speaking Club"],"body":["Dear students,","The English Speaking Club will start next Monday. The {1} is Room 203 on the second floor of the Language Center. The club is {2} of charge, so you do not need to pay anything. To join, please {3} for the club at the Student Office by Friday.","Best regards,\nMs. Hanh"]},"qs":[{"topic":1,"stem":"Blank 16","exp":"venue = địa điểm tổ chức (The venue is Room 203). semester là học kỳ, currency là tiền tệ, assignment là bài tập.","inpass":true,"opts":["currency","assignment","semester","venue"],"c":3},{"topic":5,"stem":"Blank 17","exp":"free of charge = miễn phí (cụm cố định). Câu sau nói 'không cần trả tiền' xác nhận nghĩa này. cheap of charge, empty of charge, broke of charge không tồn tại.","inpass":true,"opts":["cheap","free","broke","empty"],"c":1},{"topic":5,"stem":"Blank 18","exp":"register for = đăng ký tham gia (= sign up for). remain là ở lại, offer là đưa ra, advise là khuyên; không đi với 'for the club'.","inpass":true,"opts":["advise","remain","offer","register"],"c":3}]}]},{"label":"Part 6 · Text 2","instr":"<b>Part 6.</b> Read the text. A word or sentence is missing in some places. Choose the best answer for each blank.","groups":[{"head":"Questions 19–21 refer to the following notice.","passage":{"title":"SUN FASHION – SUMMER SALE","body":["Sun Fashion is having a big summer sale this weekend. All T-shirts, shorts and sandals are thirty percent off. Our {1} are always friendly and ready to help you find the right size. You can pay in cash or by card. {2} Please check the {3} on the label before you buy: cotton, silk or wool."]},"qs":[{"topic":2,"stem":"Blank 19","exp":"clerk = nhân viên cửa hàng, người giúp khách chọn size. referee, athlete, architect không làm việc trong cửa hàng thời trang.","inpass":true,"opts":["architects","referees","clerks","athletes"],"c":2},{"topic":2,"stem":"Blank 20 (sentence)","exp":"Câu đứng ngay sau 'You can pay in cash or by card.' nên nói thêm về việc thanh toán: giá đã gồm thuế (tax), không phải trả thêm. Các câu còn lại không liên quan đến nội dung thông báo.","inpass":true,"opts":["My friend bought a new tie there.","All prices include tax, so there is nothing more to pay.","Many customers love shopping online.","The shop was closed last Sunday."],"c":1},{"topic":2,"stem":"Blank 21","exp":"material = chất liệu; sau dấu hai chấm là cotton, silk, wool (các loại chất liệu). currency là tiền tệ, strap là quai đeo, semester là học kỳ.","inpass":true,"opts":["semester","material","currency","strap"],"c":1}]}]},{"label":"Part 6 · Text 3","instr":"<b>Part 6.</b> Read the text. A word or sentence is missing in some places. Choose the best answer for each blank.","groups":[{"head":"Questions 22–25 refer to the following email.","passage":{"meta":["To: Mr. Brown","From: Customer Service","Subject: Delay in delivery"],"body":["Dear Mr. Brown,","Thank you for your order of 200 car batteries. The delivery was supposed to arrive on Monday, but it will be late {1} a problem at the factory. Our {2} in Da Nang says the batteries will arrive on Wednesday. {3} We will also give you ten percent off your next order. {4} the batteries arrive at our warehouse, we will send them to your shop the same day.","Best regards,\nLinh Tran"]},"qs":[{"topic":5,"stem":"Blank 22","exp":"due to + danh từ (a problem) = vì, do. because phải đi với một mệnh đề (because there is a problem); although và in order to không hợp nghĩa.","inpass":true,"opts":["because","in order to","due to","although"],"c":2},{"topic":5,"stem":"Blank 23","exp":"distributor = nhà phân phối, đơn vị giao hàng. judge là thẩm phán, pilot là phi công, dentist là nha sĩ.","inpass":true,"opts":["dentist","distributor","judge","pilot"],"c":1},{"topic":5,"stem":"Blank 24 (sentence)","exp":"Thư báo giao hàng trễ nên cần một lời xin lỗi trước khi nói đến ưu đãi giảm giá. Các câu còn lại không liên quan hoặc mâu thuẫn với nội dung (nhà máy làm pin xe).","inpass":true,"opts":["The factory makes shirts and socks.","Your shop is opposite the bank.","We closed our warehouse in 2010.","We are very sorry for this delay."],"c":3},{"topic":5,"stem":"Blank 25","exp":"Once = As soon as = ngay khi (Once the batteries arrive, we will send them ...). Due to + danh từ; Apparently và Annually không nối được hai mệnh đề.","inpass":true,"opts":["Due to","Annually","Once","Apparently"],"c":2}]}]}]};
+const LETTERS = ['A','B','C','D'];
+const LIMIT = CFG.limitMin * 60;
+const MAX_PLAYS = CFG.maxPlays || 2;
+const TOPICS = CFG.topics;
+const QUESTIONS = [];
+const GROUPS = [];
+CFG.pages.forEach(p => {
+  p.from = QUESTIONS.length;
+  p.groups.forEach(g => {
+    g.id = GROUPS.length; GROUPS.push(g); g.qi = [];
+    g.qs.forEach(q => { q.group = g; g.qi.push(QUESTIONS.length); QUESTIONS.push(q); });
+  });
+  p.to = QUESTIONS.length;
+});
+const TOTAL = QUESTIONS.length, PAGES = CFG.pages.length;
+const answers = new Array(TOTAL).fill(null);
+const plays = {};
+GROUPS.forEach(g => { plays[g.id] = MAX_PLAYS; });
+let page = 0, finished = false, confirmSubmit = false, finalSeconds = 0;
+const startTime = Date.now();
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const fmt = sec => String(Math.floor(sec/60)).padStart(2,'0') + ':' + String(sec%60).padStart(2,'0');
+$('directions').innerHTML = CFG.directions;
+
+/* timer */
+function tick() {
+  if (finished) return;
+  const sec = Math.floor((Date.now() - startTime) / 1000);
+  $('elapsed').textContent = fmt(sec);
+  const f = $('timeFill');
+  f.style.width = Math.min(100, sec / LIMIT * 100) + '%';
+  f.className = 'fill' + (sec >= LIMIT ? ' over' : sec >= LIMIT * .8 ? ' warn' : '');
+  $('limitLabel').textContent = sec >= LIMIT ? 'Over the suggested time (' + fmt(LIMIT) + ')' : 'Suggested time: ' + fmt(LIMIT);
+}
+const timerId = setInterval(tick, 500); tick();
+
+/* audio (browser text-to-speech) */
+const synth = window.speechSynthesis || null;
+let voices = [], runToken = 0, playingGroup = null;
+function loadVoices() { if (synth) voices = synth.getVoices().filter(v => /^en/i.test(v.lang)); }
+if (synth) { loadVoices(); synth.onvoiceschanged = loadVoices; }
+const FEM = /(female|zira|samantha|susan|hazel|jenny|aria|karen|moira|tessa|libby|sonia|victoria|allison|ava|serena|fiona)/i;
+const MAL = /(\bmale\b|david|mark|daniel|alex|george|guy|ryan|fred|tom|james|oliver|aaron|arthur|rishi)/i;
+function voiceFor(kind) {
+  const us = voices.filter(v => /en[-_](US|GB)/i.test(v.lang));
+  const pool = us.length ? us : voices;
+  const hit = pool.find(v => (kind === 'f' ? FEM : MAL).test(v.name) && !(kind === 'm' && FEM.test(v.name)));
+  return hit || null;
+}
+function stopAudio() {
+  runToken++;
+  if (synth) synth.cancel();
+  playingGroup = null;
+  document.querySelectorAll('.playBtn').forEach(b => { b.classList.remove('on'); b.textContent = '▶ Play audio'; });
+}
+function refreshPlayers() {
+  document.querySelectorAll('.player').forEach(el => {
+    const gid = +el.dataset.g;
+    el.querySelector('.plays').textContent = 'Plays left: ' + plays[gid];
+    const b = el.querySelector('.playBtn');
+    b.disabled = plays[gid] <= 0 && playingGroup !== gid;
+  });
+}
+function playGroup(gid) {
+  const el = document.querySelector('.player[data-g="' + gid + '"]');
+  const stat = el ? el.querySelector('.pstat') : null;
+  if (!synth) { if (stat) stat.textContent = 'Audio is not supported in this browser. Please ask your teacher to read the script.'; return; }
+  if (playingGroup === gid) { stopAudio(); refreshPlayers(); return; }
+  if (plays[gid] <= 0) return;
+  stopAudio();
+  plays[gid]--; playingGroup = gid;
+  const token = ++runToken;
+  if (stat) stat.textContent = '';
+  const btn = el.querySelector('.playBtn'); btn.classList.add('on'); btn.textContent = '■ Stop';
+  loadVoices();
+  const lines = GROUPS[gid].audio;
+  let i = 0;
+  const next = () => {
+    if (token !== runToken) return;
+    if (i >= lines.length) { playingGroup = null; btn.classList.remove('on'); btn.textContent = '▶ Play audio'; refreshPlayers(); return; }
+    const ln = lines[i++];
+    setTimeout(() => {
+      if (token !== runToken) return;
+      const u = new SpeechSynthesisUtterance(ln.t);
+      u.lang = 'en-US'; u.rate = 0.9;
+      const v = voiceFor(ln.v);
+      if (v) { u.voice = v; u.lang = v.lang; } else { u.pitch = ln.v === 'f' ? 1.25 : 0.75; }
+      u.onend = next; u.onerror = next;
+      synth.speak(u);
+    }, ln.pause || 500);
+  };
+  refreshPlayers();
+  next();
+}
+
+/* pages */
+function pageDone(p) { for (let i = CFG.pages[p].from; i < CFG.pages[p].to; i++) if (answers[i] === null) return false; return true; }
+function renderChips() {
+  $('chips').innerHTML = CFG.pages.map((p, k) => '<button type="button" class="chip' + (k === page ? ' active' : '') + (pageDone(k) ? ' done' : '') +
+    '" data-page="' + k + '">' + esc(p.label) + ' (' + (p.from + 1) + '–' + p.to + ')</button>').join('');
+}
+function passageHtml(g) {
+  let h = '<div class="passage">';
+  if (g.passage.title) h += '<div class="ptitle">' + esc(g.passage.title) + '</div>';
+  (g.passage.meta || []).forEach(m => { h += '<p class="meta">' + esc(m) + '</p>'; });
+  g.passage.body.forEach(par => {
+    h += '<p>' + esc(par).replace(/\{(\d+)\}/g, (m, k) => '<span class="blank">(' + (g.qi[+k - 1] + 1) + ') ______</span>') + '</p>';
+  });
+  return h + '</div>';
+}
+function questionsHtml(g) {
+  let h = '';
+  g.qi.forEach(i => {
+    const q = QUESTIONS[i];
+    h += '<div class="question">';
+    if (q.hide) {
+      h += '<p class="qtext"><span class="num">' + (i + 1) + '.</span> Mark your answer.</p><div class="letters">';
+      q.opts.forEach((o, k) => { h += '<label class="option"><input type="radio" name="q' + i + '" value="' + k + '"' + (answers[i] === k ? ' checked' : '') + '> ' + LETTERS[k] + '</label>'; });
+      h += '</div>';
+    } else {
+      h += '<p class="qtext"><span class="num">' + (i + 1) + '.</span>' + (q.inpass ? '' : ' ' + esc(q.stem)) + '</p>';
+      q.opts.forEach((o, k) => { h += '<label class="option"><input type="radio" name="q' + i + '" value="' + k + '"' + (answers[i] === k ? ' checked' : '') + '> (' + LETTERS[k] + ') ' + esc(o) + '</label>'; });
+    }
+    h += '</div>';
+  });
+  return h;
+}
+function playerHtml(g) {
+  return '<div class="player" data-g="' + g.id + '"><button type="button" class="playBtn">▶ Play audio</button><span class="plays"></span><span class="pstat"></span></div>';
+}
+function renderPage() {
+  stopAudio();
+  const p = CFG.pages[page];
+  $('pageIndicator').textContent = p.label + '  ·  Questions ' + (p.from + 1) + '–' + p.to;
+  $('pageInstr').innerHTML = p.instr || '';
+  $('pageInstr').style.display = p.instr ? 'block' : 'none';
+  let h = '';
+  p.groups.forEach(g => {
+    if (g.head) h += '<div class="ghead">' + esc(g.head) + '</div>';
+    if (g.passage) h += '<div class="gcols">' + passageHtml(g) + '<div>' + questionsHtml(g) + '</div></div>';
+    else h += (g.audio ? playerHtml(g) : '') + questionsHtml(g);
+  });
+  $('pageBody').innerHTML = h;
+  $('backBtn').style.visibility = page === 0 ? 'hidden' : 'visible';
+  $('nextBtn').innerHTML = page === PAGES - 1 ? 'Submit' : 'Next &rarr;';
+  renderChips(); refreshPlayers(); resetConfirm();
+}
+function goto(p) { page = Math.max(0, Math.min(PAGES - 1, p)); renderPage(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+function resetConfirm() { confirmSubmit = false; $('warning').style.display = 'none'; if (page === PAGES - 1) $('nextBtn').innerHTML = 'Submit'; }
+$('pageBody').addEventListener('change', e => {
+  const t = e.target;
+  if (t && t.type === 'radio') { answers[parseInt(t.name.slice(1), 10)] = parseInt(t.value, 10); renderChips(); if (confirmSubmit) resetConfirm(); }
+});
+$('pageBody').addEventListener('click', e => {
+  const b = e.target.closest('.playBtn');
+  if (b) playGroup(+b.closest('.player').dataset.g);
+});
+$('chips').addEventListener('click', e => { const b = e.target.closest('.chip'); if (b) goto(+b.dataset.page); });
+$('backBtn').addEventListener('click', () => goto(page - 1));
+$('nextBtn').addEventListener('click', () => {
+  if (page < PAGES - 1) { goto(page + 1); return; }
+  const missing = []; answers.forEach((a, i) => { if (a === null) missing.push(i + 1); });
+  if (missing.length && !confirmSubmit) {
+    confirmSubmit = true;
+    const w = $('warning');
+    w.textContent = 'You have ' + missing.length + ' unanswered question' + (missing.length > 1 ? 's' : '') + ' (' + missing.join(', ') + '). Click Submit again to finish anyway, or use the Part buttons to go back.';
+    w.style.display = 'block'; $('nextBtn').textContent = 'Submit anyway'; return;
+  }
+  finish();
+});
+
+/* result */
+function finish() {
+  finished = true; clearInterval(timerId); stopAudio();
+  finalSeconds = Math.floor((Date.now() - startTime) / 1000);
+  let correct = 0; const byTopic = {};
+  QUESTIONS.forEach((q, i) => {
+    const t = byTopic[q.topic] || (byTopic[q.topic] = { c: 0, n: 0 });
+    t.n++; if (answers[i] === q.c) { correct++; t.c++; }
+  });
+  $('timerBar').style.display = 'none'; $('directions').style.display = 'none'; $('quiz').style.display = 'none';
+  $('result').style.display = 'block';
+  $('scorePercent').textContent = Math.round(correct / TOTAL * 100) + '%';
+  $('scoreCount').textContent = correct + ' / ' + TOTAL + ' correct';
+  $('finalTime').textContent = fmt(finalSeconds);
+  let rows = '', weak = [];
+  Object.keys(TOPICS).forEach(id => {
+    const t = byTopic[id]; if (!t) return;
+    const p = Math.round(t.c / t.n * 100), low = p < 70;
+    if (low) weak.push(TOPICS[id].en);
+    rows += '<div class="topic-row"><div>' + esc(TOPICS[id].en) + '<small>' + esc(TOPICS[id].vi) + '</small></div><div class="mini-track"><div class="mini-fill' + (low ? ' low' : '') + '" style="width:' + p + '%"></div></div><div class="tscore">' + t.c + '/' + t.n + '</div></div>';
+  });
+  $('topicRows').innerHTML = rows;
+  $('reviewHint').textContent = weak.length ? 'Nên ôn lại (dưới 70%): ' + weak.join('; ') + '.' : 'Tuyệt vời! Bạn đạt từ 70% trở lên ở tất cả các chủ đề.';
+  renderReview('all'); window.scrollTo({ top: 0 });
+}
+function scriptHtml(g) {
+  if (!g.showScript) return '';
+  return '<div class="script"><b>Script:</b>' + g.audio.map(l => '<div><b>' + (l.v === 'f' ? 'Woman' : 'Man') + ':</b> ' + esc(l.t) + '</div>').join('') + '</div>';
+}
+function renderReview(filter) {
+  let h = '', shown = 0;
+  QUESTIONS.forEach((q, i) => {
+    const a = answers[i], ok = a === q.c;
+    if (filter === 'wrong' && ok) return;
+    shown++;
+    const cls = ok ? 'ok' : (a === null ? 'skip' : 'bad');
+    const status = ok ? '✓ Correct' : (a === null ? 'Not answered' : '✗ Incorrect');
+    const stemTxt = q.hide ? 'Audio question: “' + q.stem + '”' : q.stem;
+    h += '<div class="rev ' + cls + '"><div class="rev-head"><p class="qtext" style="margin:0"><span class="num">' + (i + 1) + '.</span> ' + esc(stemTxt) + '</p><span class="rev-status">' + status + '</span></div><div class="rev-topic">' + esc(TOPICS[q.topic].en) + '</div>';
+    if (q.group.qi[0] === i) h += scriptHtml(q.group);
+    q.opts.forEach((o, k) => {
+      let c = '', tag = '';
+      if (k === q.c) { c = ' correct'; tag = '<span class="tag">' + (a === q.c ? '✓ Your answer' : '✓ Correct answer') + '</span>'; }
+      else if (k === a) { c = ' wrong'; tag = '<span class="tag">✗ Your answer</span>'; }
+      h += '<div class="ropt' + c + '">(' + LETTERS[k] + ') ' + esc(o) + tag + '</div>';
+    });
+    h += '<div class="exp"><b>Giải thích:</b> ' + esc(q.exp) + '</div></div>';
+  });
+  if (!shown) h = '<p style="text-align:center;color:#1d6b50;font-weight:bold;">No wrong answers. Excellent!</p>';
+  $('reviewList').innerHTML = h;
+  document.querySelectorAll('.filterBtn').forEach(b => b.classList.toggle('active', b.dataset.filter === filter));
+}
+document.querySelectorAll('.filterBtn').forEach(b => b.addEventListener('click', () => renderReview(b.dataset.filter)));
+$('retryBtn').addEventListener('click', () => location.reload());
+renderPage();
+</script>
+</body>
+</html>
